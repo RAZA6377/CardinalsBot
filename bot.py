@@ -5,7 +5,9 @@ import discord
 from discord.ext import commands
 from termcolor import colored
 from handlers._cogs import CogManager
+from handlers._printer import ColorPrint
 import traceback
+import asyncio
 
 class EntityX(commands.Bot):
     def __init__(
@@ -21,27 +23,67 @@ class EntityX(commands.Bot):
           )
           
         try:
-            self.cog_manager = CogManager(self)
-        except Exception as e:
-            print(e)
-          
-    async def setup_hook(self):
-        try:
-            loaded, failed = await bot.cog_manager.load_cogs()
-            loaded_text = colored(f"Loaded Cogs : {loaded}", 'white', 'on_green')
-            failed_text = colored(f"Failed To Load Cogs : {failed}", 'white', 'on_red')
-            print(loaded_text)
-            print(failed_text)
-        except Exception as e:
-            print(e)
+            self.cog_manager = CogManager
+            self.color_printer = ColorPrint
+        except Exception:
             traceback.print_exc()
-            pass
 
     async def on_ready(self):
         bot_ready = colored(f"{self.user} Is Started", 'black','on_cyan')
         print(bot_ready)
-        
-        
-        
+       
 bot = EntityX(command_prefix='e.')
-bot.run('MTIzODc2MDc3MTA1MjI0NTA0Mg.GgjXL_.mZouEX0uhtx-QdmB48bO7psYaMBbg6PWdzmPic')       
+
+@bot.command(hidden=True, name='eval')
+@commands.is_owner()
+async def eval(ctx: commands.Context, *, body: str):
+    """Evaluates a code"""
+    env = {
+        'bot': bot,
+        'ctx': ctx,
+        'channel': ctx.channel,
+        'author': ctx.author,
+        'guild': ctx.guild,
+        'message': ctx.message,
+    }
+    env.update(globals())
+    body = cleanup_code(body)
+    stdout = io.StringIO()
+    to_compile = f'async def func():\n{textwrap.indent(body, "  ")}'
+    try:
+        exec(to_compile, env)
+    except Exception as e:
+        return await ctx.send(f'```py\n{e.__class__.__name__}: {e}\n```')
+    func = env['func']
+    try:
+        with redirect_stdout(stdout):
+            ret = await func()
+    except Exception as e:
+        value = stdout.getvalue()
+        await ctx.send(f'```py\n{value}{traceback.format_exc()}\n```')
+    else:
+        value = stdout.getvalue()
+        try:
+            await ctx.message.add_reaction('\u2705')
+        except:
+            pass
+        if ret is None:
+            if value:
+                await ctx.send(f'```py\n{value}\n```')
+        else:
+            await ctx.send(f'```py\n{value}{ret}\n```')
+
+
+
+async def main():
+    '''Main function for starting bot and loading cogs once bot is ready'''
+    loaded, failed = await bot.cog_manager().load_cogs(bot)
+    bot.color_printer(f"Loaded Cogs : {loaded}").success()
+    bot.color_printer(f"Failed Cogs : {failed}").failed()
+    #print('starting bot')
+    async with bot:
+        await bot.start('MTIzODc2MDc3MTA1MjI0NTA0Mg.GgjXL_.mZouEX0uhtx-QdmB48bO7psYaMBbg6PWdzmPic')
+        
+
+if __name__ == "__main__":
+    asyncio.run(main())
