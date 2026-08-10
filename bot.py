@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import discord
 from discord.ext import commands
-from colorama import init
 from termcolor import colored
 from handlers._cogs import CogManager
 import traceback
