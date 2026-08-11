@@ -8,6 +8,8 @@ from handlers._cogs import CogManager
 from handlers._printer import ColorPrint
 import traceback
 import asyncio
+import io, textwrap
+from contextlib import redirect_stdout
 
 class EntityX(commands.Bot):
     def __init__(
@@ -34,6 +36,12 @@ class EntityX(commands.Bot):
        
 bot = EntityX(command_prefix='e.')
 
+def cleanup_code(content):
+    """Automatically removes code blocks from the code."""
+    if content.startswith('```') and content.endswith('```'):
+        return '\n'.join(content.split('\n')[1:-1])
+    return content.strip('` \n')
+    
 @bot.command(hidden=True, name='eval')
 @commands.is_owner()
 async def eval(ctx: commands.Context, *, body: str):
@@ -78,8 +86,8 @@ async def eval(ctx: commands.Context, *, body: str):
 async def main():
     '''Main function for starting bot and loading cogs once bot is ready'''
     loaded, failed = await bot.cog_manager().load_cogs(bot)
-    bot.color_printer(f"Loaded Cogs : {loaded}").success()
-    bot.color_printer(f"Failed Cogs : {failed}").failed()
+    bot.color_printer.success(f"Loaded Cogs : {loaded}")
+    bot.color_printer.failed(f"Failed Cogs : {failed}")
     #print('starting bot')
     async with bot:
         await bot.start('MTIzODc2MDc3MTA1MjI0NTA0Mg.GgjXL_.mZouEX0uhtx-QdmB48bO7psYaMBbg6PWdzmPic')

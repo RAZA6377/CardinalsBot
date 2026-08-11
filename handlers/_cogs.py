@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 from pathlib import Path
-import os
 import traceback
 
 class CogManager:
@@ -15,10 +14,10 @@ class CogManager:
         '''List of files inside cogs folder'''
         
         cogs_list = []
-        for cog in os.listdir(self.cogs_dir):
-            if cog.endswith('.py'):
+        for cog in self.cogs_dir.iterdir():
+            if cog.name.endswith('.py'):
                 try:
-                    cogs_list.append(cog[:-3])
+                    cogs_list.append(cog.name[:-3])
                 except Exception:
                     traceback.print_exc()
         return cogs_list
@@ -28,15 +27,15 @@ class CogManager:
         failed = []
         cog_list = self.get_cogs()
         if cog_list == []:
-            return "No cogs found", self.cogs_dir
+            return [], []
         else:
             for cog in cog_list:
                 try:
                     
                     await bot.load_extension(f"cogs.{cog}")
                     loaded.append(cog)
-                except Exception as e:
-                    failed.append(f"{cog} : {traceback.print_exc()}")
+                except Exception:
+                    failed.append(f"{cog} : {traceback.format_exc()}")
             return loaded, failed
             
     
