@@ -8,22 +8,23 @@ from handlers._cogs import CogHandler
 from handlers._printer import ColorPrint
 import traceback
 import asyncio
-import io, textwrap
+import io
+import textwrap
 from contextlib import redirect_stdout
+
 
 class CardinalsBot(commands.Bot):
     def __init__(
         self,
         command_prefix: str,
-        ):
-        
+    ):
         super().__init__(
-            command_prefix = command_prefix,
-            intents = discord.Intents.all(),
-            owner_id = 924617239301324856,
-            application_id = 1238760771052245042         
-          )
-          
+            command_prefix=command_prefix,
+            intents=discord.Intents.all(),
+            owner_id=924617239301324856,
+            application_id=1238760771052245042,
+        )
+
         try:
             self.cog_handler = CogHandler
             self.color_printer = ColorPrint
@@ -31,66 +32,70 @@ class CardinalsBot(commands.Bot):
             traceback.print_exc()
 
     async def on_ready(self):
-        bot_ready = colored(f"{self.user} Is Started", 'black','on_cyan')
+        bot_ready = colored(f"{self.user} Is Started", "black", "on_cyan")
         print(bot_ready)
-       
-bot = CardinalsBot(command_prefix='c.')
+
+
+bot = CardinalsBot(command_prefix="c.")
+
 
 def cleanup_code(content):
     """Automatically removes code blocks from the code."""
-    if content.startswith('```') and content.endswith('```'):
-        return '\n'.join(content.split('\n')[1:-1])
-    return content.strip('` \n')
-    
-@bot.command(hidden=True, name='eval')
+    if content.startswith("```") and content.endswith("```"):
+        return "\n".join(content.split("\n")[1:-1])
+    return content.strip("` \n")
+
+
+@bot.command(hidden=True, name="eval")
 @commands.is_owner()
 async def eval(ctx: commands.Context, *, body: str):
     """Evaluates a code"""
     env = {
-        'bot': bot,
-        'ctx': ctx,
-        'channel': ctx.channel,
-        'author': ctx.author,
-        'guild': ctx.guild,
-        'message': ctx.message,
+        "bot": bot,
+        "ctx": ctx,
+        "channel": ctx.channel,
+        "author": ctx.author,
+        "guild": ctx.guild,
+        "message": ctx.message,
     }
     env.update(globals())
     body = cleanup_code(body)
     stdout = io.StringIO()
-    to_compile = f'async def func():\n{textwrap.indent(body, "  ")}'
+    to_compile = f"async def func():\n{textwrap.indent(body, '  ')}"
     try:
         exec(to_compile, env)
     except Exception as e:
-        return await ctx.send(f'```py\n{e.__class__.__name__}: {e}\n```')
-    func = env['func']
+        return await ctx.send(f"```py\n{e.__class__.__name__}: {e}\n```")
+    func = env["func"]
     try:
         with redirect_stdout(stdout):
             ret = await func()
-    except Exception as e:
+    except Exception:
         value = stdout.getvalue()
-        await ctx.send(f'```py\n{value}{traceback.format_exc()}\n```')
+        await ctx.send(f"```py\n{value}{traceback.format_exc()}\n```")
     else:
         value = stdout.getvalue()
         try:
-            await ctx.message.add_reaction('\u2705')
+            await ctx.message.add_reaction("\u2705")
         except:
             pass
         if ret is None:
             if value:
-                await ctx.send(f'```py\n{value}\n```')
+                await ctx.send(f"```py\n{value}\n```")
         else:
-            await ctx.send(f'```py\n{value}{ret}\n```')
-
+            await ctx.send(f"```py\n{value}{ret}\n```")
 
 
 async def main():
-    '''Main function for starting bot and loading cogs once bot is ready'''
+    """Main function for starting bot and loading cogs once bot is ready"""
     loaded, failed = await bot.cog_handler().load_cogs(bot)
     bot.color_printer.success(f"Loaded Cogs : {loaded}")
     bot.color_printer.failed(f"Failed Cogs : {failed}")
     async with bot:
-        await bot.start('MTA4NDg4MTA0MjkxNTE5NjkyOA.Giqo00.QmxUyAxNpzWeddE8S2PKO5aCS1db5BVgdLB2KM')
-        
+        await bot.start(
+            "MTA4NDg4MTA0MjkxNTE5NjkyOA.Giqo00.QmxUyAxNpzWeddE8S2PKO5aCS1db5BVgdLB2KM"
+        )
+
 
 if __name__ == "__main__":
     asyncio.run(main())
