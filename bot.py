@@ -1,17 +1,17 @@
-# EntityX Discord Bot By raza.py
+# TDG-Bot Discord Bot By raza.py
 from __future__ import annotations
 
 import discord
 from discord.ext import commands
 from termcolor import colored
-from handlers._cogs import CogManager
+from handlers._cogs import CogHandler
 from handlers._printer import ColorPrint
 import traceback
 import asyncio
 import io, textwrap
 from contextlib import redirect_stdout
 
-class EntityX(commands.Bot):
+class CardinalsBot(commands.Bot):
     def __init__(
         self,
         command_prefix: str,
@@ -25,7 +25,7 @@ class EntityX(commands.Bot):
           )
           
         try:
-            self.cog_manager = CogManager
+            self.cog_handler = CogHandler
             self.color_printer = ColorPrint
         except Exception:
             traceback.print_exc()
@@ -34,7 +34,7 @@ class EntityX(commands.Bot):
         bot_ready = colored(f"{self.user} Is Started", 'black','on_cyan')
         print(bot_ready)
        
-bot = EntityX(command_prefix='e.')
+bot = CardinalsBot(command_prefix='c.')
 
 def cleanup_code(content):
     """Automatically removes code blocks from the code."""
@@ -85,12 +85,11 @@ async def eval(ctx: commands.Context, *, body: str):
 
 async def main():
     '''Main function for starting bot and loading cogs once bot is ready'''
-    loaded, failed = await bot.cog_manager().load_cogs(bot)
+    loaded, failed = await bot.cog_handler().load_cogs(bot)
     bot.color_printer.success(f"Loaded Cogs : {loaded}")
     bot.color_printer.failed(f"Failed Cogs : {failed}")
-    #print('starting bot')
     async with bot:
-        await bot.start('MTIzODc2MDc3MTA1MjI0NTA0Mg.GgjXL_.mZouEX0uhtx-QdmB48bO7psYaMBbg6PWdzmPic')
+        await bot.start('MTA4NDg4MTA0MjkxNTE5NjkyOA.Giqo00.QmxUyAxNpzWeddE8S2PKO5aCS1db5BVgdLB2KM')
         
 
 if __name__ == "__main__":

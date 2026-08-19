@@ -1,2 +1,2 @@
-# EntityXBot
-An Official Bot For EntityX
+# Discord-Bot-Template
+A template for discord bot
