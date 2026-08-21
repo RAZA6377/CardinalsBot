@@ -68,6 +68,18 @@ class WelcomeLayout(LayoutView):
 class WelcomeCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        
+        
+    @commands.listener()
+    async def on_member_join(self, member: discord.Member):
+        try:
+            channel = member.guild.get_channel(1539651470327156911)
+            layout = WelcomeLayout(member)
+            await channel.send(view=layout)
+        except Exception as e:
+            print(f"ERROR while welcoming {member.name}: {type(e).__name__}:  {e}")
+            pass
+            
 
     @commands.command(name="welcome_test", description="Test Welcome Message")
     async def welcome_test(self, ctx):
