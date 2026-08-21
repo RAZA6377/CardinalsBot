@@ -1,4 +1,4 @@
-# TDG-Bot Discord Bot By raza.py
+# Cardinals Discord Bot By raza.py
 from __future__ import annotations
 
 import discord
@@ -9,6 +9,7 @@ import asyncio
 import io
 import textwrap
 from contextlib import redirect_stdout
+
 # --- Handlers ---
 from handlers._cogs import CogHandler
 from handlers._printer import ColorPrint
@@ -36,7 +37,11 @@ class CardinalsBot(commands.Bot):
             traceback.print_exc()
 
     async def on_ready(self):
-        bot_ready = colored(f"{self.user} Is Started", "black", "on_cyan")
+        bot_ready = colored(
+            f"{self.user} Is Started\nPrefix : {self.command_prefix}",
+            "black",
+            "on_cyan",
+        )
         print(bot_ready)
 
 
@@ -81,7 +86,7 @@ async def eval(ctx: commands.Context, *, body: str):
         value = stdout.getvalue()
         try:
             await ctx.message.add_reaction("\u2705")
-        except:
+        except Exception:
             pass
         if ret is None:
             if value:

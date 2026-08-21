@@ -1,6 +1,7 @@
 from pathlib import Path
-from .handlers._printer import ColorPrint
+from handlers._printer import ColorPrint
 import json
+from typing import Dict
 
 
 class DataManager:
@@ -15,7 +16,7 @@ class DataManager:
     @staticmethod
     def get_data_files(self):
         files = list()
-        for file in get_data_dir.iterdir():
+        for file in self.get_data_dir.iterdir():
             files.append(file)
         return files
 
@@ -32,4 +33,4 @@ class DataManager:
     @staticmethod
     def save_file(self, file: Path, data: Dict):
         with open(file, "w") as f:
-            json.dump(data, file, indent=4)
+            json.dump(data, f, indent=4)

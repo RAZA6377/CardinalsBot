@@ -8,6 +8,7 @@ class Test(commands.Cog):
     @commands.command(name="hello", description="testing command")
     async def hello(self, ctx):
         await ctx.send("Hello There!")
+        print("Hello")
 
 
 async def setup(bot: commands.Bot):
