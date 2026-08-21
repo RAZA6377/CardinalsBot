@@ -4,13 +4,16 @@ from __future__ import annotations
 import discord
 from discord.ext import commands
 from termcolor import colored
-from handlers._cogs import CogHandler
-from handlers._printer import ColorPrint
 import traceback
 import asyncio
 import io
 import textwrap
 from contextlib import redirect_stdout
+# --- Handlers ---
+from handlers._cogs import CogHandler
+from handlers._printer import ColorPrint
+from handlers._data import DataManager
+# --- Handlers ----
 
 
 class CardinalsBot(commands.Bot):
@@ -27,6 +30,7 @@ class CardinalsBot(commands.Bot):
 
         try:
             self.cog_handler = CogHandler
+            self.data_manager = DataManager
             self.color_printer = ColorPrint
         except Exception:
             traceback.print_exc()
@@ -93,7 +97,7 @@ async def main():
     bot.color_printer.failed(f"Failed Cogs : {failed}")
     async with bot:
         await bot.start(
-            "MTA4NDg4MTA0MjkxNTE5NjkyOA.Giqo00.QmxUyAxNpzWeddE8S2PKO5aCS1db5BVgdLB2KM"
+            "MTUzOTY4MTgyNjAwMjU3NTQ5MQ.GKnGTZ.x5IwIQh1Zc9-7ge1Plr87ZictpA5Dit3FZgpqM"
         )
 
 

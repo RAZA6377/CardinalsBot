@@ -1,2 +1,2 @@
-# Discord-Bot-Template
-A template for discord bot
+# The Cardinal Manager
+- Discord Bot For The Cardinal
