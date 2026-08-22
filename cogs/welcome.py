@@ -20,7 +20,7 @@ class WelcomeLayout(LayoutView):
 
     def _build_container(self, member: discord.Member):
         sep = Separator(visible=True)
-        server_name = TextDisplay("## 𝚆𝚎𝚕𝚌𝚘𝚖𝚎 𝚝𝚘 𝚃𝚑𝚎 𝙲𝚊𝚛𝚍𝚒𝚗𝚊𝚕")
+        server_name = TextDisplay("### 𝚆𝚎𝚕𝚌𝚘𝚖𝚎 𝚝𝚘 𝚃𝚑𝚎 𝙲𝚊𝚛𝚍𝚒𝚗𝚊𝚕")
         user_name = TextDisplay(
             f"**Name** : `{member.name}`\n**Mention** : {member.mention}\n**ID** : `{member.id}`"
         )
