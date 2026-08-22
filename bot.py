@@ -18,7 +18,7 @@ from handlers._printer import ColorPrint
 from handlers._data import DataManager
 # --- Handlers ----
 load_dotenv()
-token = os.getenv('token')
+token = os.getenv('BOT_TOKEN')
 
 class CardinalsBot(commands.Bot):
     def __init__(
