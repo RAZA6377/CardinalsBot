@@ -59,7 +59,7 @@ class WelcomeLayout(LayoutView):
             user_section,
             sep,
             welcome_banner,
-            button_action_row,
+           # button_action_row,
             accent_color=0x00FFFF,
         )
         self.add_item(container)
@@ -70,7 +70,7 @@ class WelcomeCog(commands.Cog):
         self.bot = bot
         
         
-    @commands.listener()
+    @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         try:
             channel = member.guild.get_channel(1539651470327156911)

@@ -9,13 +9,16 @@ import asyncio
 import io
 import textwrap
 from contextlib import redirect_stdout
+from dotenv import load_dotenv
+import os
 
 # --- Handlers ---
 from handlers._cogs import CogHandler
 from handlers._printer import ColorPrint
 from handlers._data import DataManager
 # --- Handlers ----
-
+load_dotenv()
+token = os.getenv('token')
 
 class CardinalsBot(commands.Bot):
     def __init__(
@@ -101,9 +104,7 @@ async def main():
     bot.color_printer.success(f"Loaded Cogs : {loaded}")
     bot.color_printer.failed(f"Failed Cogs : {failed}")
     async with bot:
-        await bot.start(
-            "MTUzOTY4MTgyNjAwMjU3NTQ5MQ.GKnGTZ.x5IwIQh1Zc9-7ge1Plr87ZictpA5Dit3FZgpqM"
-        )
+        await bot.start(token)
 
 
 if __name__ == "__main__":
