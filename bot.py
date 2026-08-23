@@ -16,6 +16,7 @@ import os
 from handlers._cogs import CogHandler
 from handlers._printer import ColorPrint
 from handlers._data import DataManager
+from handlers._account import BsAccount
 # --- Handlers ----
 load_dotenv()
 token = os.getenv('BOT_TOKEN')
@@ -33,6 +34,7 @@ class CardinalsBot(commands.Bot):
         )
 
         try:
+            self.acc_manager = BsAccount
             self.cog_handler = CogHandler
             self.data_manager = DataManager
             self.color_printer = ColorPrint
