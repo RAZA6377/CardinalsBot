@@ -167,7 +167,7 @@ class JoinButton(Button):
         self.clan_manager = ClanManager()
         
     async def callback(self, interaction: discord.Interaction):
-        role, clan_name = self.clan_manager.get_user_info(intetaction.user)
+        role, clan_name = self.clan_manager.get_user_info(interaction.user)
         if role == 'Leader':
             await interaction.followup.send(f'You already own {clan_name} clan', ephemeral=True)
             return
