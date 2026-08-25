@@ -218,7 +218,7 @@ class JoinClanModal(Modal, title="Join a Clan"):
         options = [
             discord.SelectOption(
                 label=clan_name,
-                value=clan_data['description']
+                value=clan_name
             )
             for clan_name, clan_data in self.clan_manager.get_data().items()
         ]
@@ -230,8 +230,8 @@ class JoinClanModal(Modal, title="Join a Clan"):
         )
         
     async def on_submit(self, interaction: discord.Interaction):
-        self.aid_value = self.aid.value
-        self.selected_clan = self.clan_select.value[0]
+        self.aid_value = aid.value
+        self.selected_clan = clan_select.values[0]
         self.applicant = interaction.user
         clan_info = self.clan_manager.get_clan(self.selected_clan)
         clan_leader = interaction.guild.get_member(clan_info['leader_id'])
@@ -269,7 +269,7 @@ class ClanDashboard(LayoutView):
         clan_text = TextDisplay("## Clan System")
         container.add_item(clan_text)
         container.add_item(sep)
-        clan_desc = TextDisplay(f"```js\n{CLAN_DESCRIPTION}\n````")
+        clan_desc = TextDisplay(f"```js\n{CLAN_DESCRIPTION}\n```")
         container.add_item(clan_desc)
         button_row = ActionRow()
         join_button = Button(label='Join Clan', style=discord.ButtonStyle.secondary)
