@@ -207,7 +207,7 @@ class JoinClanModal(Modal, title="Join a Clan"):
         super().__init__(custom_id='clan:join_modal')
         self.clan_manager = ClanManager()
     
-        aid = TextInput(
+        self.aid = TextInput(
             label='Enter your a-ID',
             placeholder='Example: a-xxx', 
             required=True,
@@ -223,15 +223,15 @@ class JoinClanModal(Modal, title="Join a Clan"):
             for clan_name, clan_data in self.clan_manager.get_data().items()
         ]
         
-        clan_select = Select(
+        self.clan_select = Select(
             placeholder='Select a clan',
             options=options,
             required=True
         )
         
     async def on_submit(self, interaction: discord.Interaction):
-        self.aid_value = aid.value
-        self.selected_clan = clan_select.values[0]
+        self.aid_value = self.aid.value
+        self.selected_clan = self.clan_select.values[0]
         self.applicant = interaction.user
         clan_info = self.clan_manager.get_clan(self.selected_clan)
         clan_leader = interaction.guild.get_member(clan_info['leader_id'])
