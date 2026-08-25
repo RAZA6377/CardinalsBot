@@ -167,7 +167,7 @@ class JoinButton(Button):
         self.clan_manager = ClanManager()
         
     async def callback(self, interaction: discord.Interaction):
-        role, clan_name = self.clan_manager.get_user_info()
+        role, clan_name = self.clan_manager.get_user_info(intetaction.user)
         if role == 'Leader':
             await interaction.followup.send(f'You already own {clan_name} clan', ephemeral=True)
             return
@@ -225,7 +225,7 @@ class JoinClanModal(Modal, title="Join a Clan"):
         
         clan_select = Select(
             placeholder='Select a clan',
-            option=options,
+            options=options,
             required=True
         )
         
@@ -263,7 +263,7 @@ class ClanDashboard(LayoutView):
         self._build_dashboard()
         
     def _build_dashboard(self):
-        clan_manager = ClanManager(self.bot)
+        clan_manager = ClanManager()
         container = Container()
         sep = Separator()
         clan_text = TextDisplay("## Clan System")
