@@ -1,22 +1,15 @@
 import requests
-import os
-from dotenv import load_dotenv
 
-load_dotenv()
-api = os.getenv('BS_API_KEY')
-
-
-headers = {
-    "Authorization": f"Bearer {api}",
-    "Content-Type": "application/json",
-    "User-Agent": "RaZa"
-}
 
 class BsAccount:
     def __init__(self, aid: str):
         self.aid = aid
         
-    def get_aid(self):
-        response = requests.get(f"https://www.ballistica.net/api/v1/accounts/{self.aid}", headers=headers)
+    def get_aid_info(self):
+        response = requests.get(f"https://account.thecardinal.workers.dev/{self.aid}")
         data = response.json()
+        if data.get('error'):
+            return None
+
         return data
+        

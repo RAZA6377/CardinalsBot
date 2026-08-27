@@ -1,1 +1,17 @@
-{}
+{
+    "adil": {
+        "description": "Simple test clan",
+        "leader_id": 1395772991769415780,
+        "players": [
+            {
+                "name": "codielc",
+                "user_id": 1395772991769415780,
+                "aid": "a-187"
+            }
+        ],
+        "clan_role_id": null,
+        "won": 0,
+        "lost": 0,
+        "created_at": 1787828844
+    }
+}

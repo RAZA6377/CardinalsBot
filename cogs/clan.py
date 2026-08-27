@@ -1,6 +1,8 @@
+from __future__ import annotations
 import discord
 from discord.ext import commands, tasks
 from discord.ui import LayoutView, Container, Button, Section, Separator, ActionRow, TextDisplay, Modal, TextInput, Select, View
+import traceback
 import time
 from handlers._data import DataManager
 from handlers._account import BsAccount
@@ -39,7 +41,7 @@ class ClanManager:
                 return "Leader", clan_name
                 break
             for players in clan_data['players']:
-                if int(players['uid']) == int(user.id):
+                if int(players['user_id']) == int(user.id):
                     return "Member", clan_name
                     break
         return None, None
@@ -154,7 +156,9 @@ class ConfirmView(discord.ui.View):
         await self.on_deny(interaction)
         self.stop()
         
-        
+class CreateClanButton(Button):
+    pass
+    # Todo add create clan with modal
             
 class JoinButton(Button):
     def __init__(self):
@@ -167,15 +171,99 @@ class JoinButton(Button):
         self.clan_manager = ClanManager()
         
     async def callback(self, interaction: discord.Interaction):
-        role, clan_name = self.clan_manager.get_user_info(interaction.user)
-        if role == 'Leader':
-            await interaction.followup.send(f'You already own {clan_name} clan', ephemeral=True)
-            return
-        elif role == 'Member':
-            await interaction.followup.send(f'You are already a member of {clan_name} clan', ephemeral=True)
-            return
-        else:
-            await interaction.response.send_modal(JoinClanModal())
+        print('Join button pressed')
+        try:
+            role, clan_name = self.clan_manager.get_user_info(interaction.user)
+            print(role, clan_name)
+            if role == 'Leader':
+                await interaction.response.send_message(f'You already own {clan_name} clan', ephemeral=True)
+                return
+            elif role == 'Member':
+                await interaction.response.send_message(f'You are already a member of {clan_name} clan', ephemeral=True)
+                return
+            else:
+                await interaction.response.send_modal(JoinClanModal())
+        except Exception as e:
+            await interaction.response.send_message(e, ephemeral=True)
+            traceback.print_exc()
+            
+class JoinClanModal(Modal):
+    def __init__(self):
+        super().__init__(title='Join a clan', custom_id='clan:join_modal')
+        self.clan_manager = ClanManager()
+    
+        self.aid = TextInput(
+            label='Enter your a-ID',
+            placeholder='Example: a-xxx', 
+            required=True,
+        )
+        
+        options = [
+            discord.SelectOption(
+                label=clan_name,
+                value=clan_name
+            )
+            for clan_name, clan_data in self.clan_manager.get_data().items()
+        ]
+        
+        self.clan_select = Select(
+            placeholder='Select a clan',
+            options=options,
+            required=True
+        )
+        self.add_item(self.aid)
+        self.add_item(
+            discord.ui.Label(
+                text='Select a clan',
+                component=self.clan_select
+            )
+        )
+        
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            self.aid_value = BsAccount(self.aid.value).get_aid_info()
+            print(self.aid_value)
+            self.selected_clan = self.clan_select.values[0]
+            print(self.selected_clan)
+            self.applicant = interaction.user
+            clan_info = self.clan_manager.get_clan(self.selected_clan)
+            clan_leader = interaction.guild.get_member(clan_info['leader_id'])
+        
+            if self.aid_value is None:
+                await interaction.response.send_message('Invalid `a-id`. Try again', ephemeral=True)
+                return
+            else:
+                aid_confirmation_embed = discord.Embed(title='Account Id Confirmation', description=f'**Tag**: `{self.aid_value['tag']}`\n**Account ID** : `{self.aid_value['id']}`\n**Created** : `{self.aid_value['create_time']}`',color=0x00FFFF)
+                await interaction.response.send_message(embed=aid_confirmation_embed, view=ConfirmView(on_confirm=on_aid_confirm, on_deny=on_aid_deny))
+        
+            async def on_aid_confirm(interaction: discord.Interaction):
+                await clan_leader.send(embed=embed,view=ConfirmView(on_confirm=on_approval_accept, on_deny=on_approval_deny))
+                await interaction.response.edit_message(f"Your request has been sent to {clan_leader.name} DM's", view=None)
+                
+            async def on_aid_deny(interaction: discord.Interaction):
+                await interaction.response.edit_message(f"Request Cancelled.", view=None)
+                return
+                
+            embed = discord.Embed(title='Clan Join Request', description=f"{interaction.user.name} Applied for your clan.\n```Username : {interaction.user.name}\nDiscord Id : {interaction.user.id}\nBs Aid : {self.aid_value}```", color=0x00FFFF)
+        
+            async def on_approval_accept(interaction: discord.Interaction):
+                clan_role = interaction.guild.get_role(clan_info['clan_role_id'])
+                await interaction.user.add_roles(clan_role)
+                user_add = self.clan_manager.add_user(interaction.user,self.aid_value, self.selected_clan)
+                await interaction.response.edit_message(view=None)
+                if user_add == 'Success':
+                    await self.applicant.send(f'Congratulations! You are now a member of {self.selected_clan} Clan')
+                else:
+                    await self.applicant.send(user_add)
+        
+            async def on_approval_deny(interaction: discord.Interaction):
+                await interaction.response.edit_message(view=None)
+                await self.applicant.send(f'Your approval for {self.selected_clan} Clan has been declined. Try again')
+        except Exception as e:
+            traceback.print_exc()
+            await interaction.response.send_message(e, ephemeral=True)
+            
+        
             
 class ClanListButton(Button):
     def __init__(self):
@@ -197,65 +285,10 @@ class ClanListButton(Button):
                 
             await interaction.response.send(embed=embed, ephemeral=True)
         else:
-            await interaction.response.send_message('No Available Clans')
+            await interaction.response.send_message('```No Available Clans Found.```', ephemeral=True)
             return
         
         
-        
-class JoinClanModal(Modal, title="Join a Clan"):
-    def __init__(self):
-        super().__init__(custom_id='clan:join_modal')
-        self.clan_manager = ClanManager()
-    
-        self.aid = TextInput(
-            label='Enter your a-ID',
-            placeholder='Example: a-xxx', 
-            required=True,
-            min_length=5,
-            max_length=5
-        )
-        
-        options = [
-            discord.SelectOption(
-                label=clan_name,
-                value=clan_name
-            )
-            for clan_name, clan_data in self.clan_manager.get_data().items()
-        ]
-        
-        self.clan_select = Select(
-            placeholder='Select a clan',
-            options=options,
-            required=True
-        )
-        
-    async def on_submit(self, interaction: discord.Interaction):
-        self.aid_value = self.aid.value
-        self.selected_clan = self.clan_select.values[0]
-        self.applicant = interaction.user
-        clan_info = self.clan_manager.get_clan(self.selected_clan)
-        clan_leader = interaction.guild.get_member(clan_info['leader_id'])
-        embed = discord.Embed(title='Clan Join Request', description=f"{interaction.user.name} Applied for your clan.\n```Username : {interaction.user.name}\nDiscord Id : {interaction.user.id}\nBs Aid : {self.aid_value}```", color=0x00FFFF)
-        
-        async def onconfirm(interaction: discord.Interaction):
-            clan_role = interaction.guild.get_role(clan_info['clan_role_id'])
-            await interaction.user.add_roles(clan_role)
-            user_add = self.clan_manager.add_user(interaction.user,self.aid_value, self.selected_clan)
-            await interaction.response.edit_message(view=None)
-            if user_add == 'Success':
-                await self.applicant.send(f'Congratulations! You are now a member of {self.selected_clan} Clan')
-            else:
-                await self.applicant.send(user_add)
-        
-        async def ondeny(interaction: discord.Interaction):
-            await interaction.response.edit_message(view=None)
-            await self.applicant.send(f'Your approval for {self.selected_clan} Clan has been declined. Try again')
-            
-        await clan_leader.send(embed=embed,view=ConfirmView(on_confirm=onconfirm, on_deny=ondeny))
-        
-        
-        
-            
 class ClanDashboard(LayoutView):
     def __init__(self, bot):
         super().__init__(timeout=None)
@@ -271,15 +304,25 @@ class ClanDashboard(LayoutView):
         container.add_item(sep)
         clan_desc = TextDisplay(f"```js\n{CLAN_DESCRIPTION}\n```")
         container.add_item(clan_desc)
+        container.add_item(sep)
         button_row = ActionRow()
-        join_button = Button(label='Join Clan', style=discord.ButtonStyle.secondary)
-        clan_button = Button(label='Available Clans', style=discord.ButtonStyle.secondary)
+        button_row.add_item(JoinButton())
+        button_row.add_item(ClanListButton())
+        container.add_item(button_row)
+        container.accent_color = 0x00FFFF
+        self.add_item(container)
         
         
 class ClanCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        pass
+        
+    @commands.command()
+    async def clandash(self, ctx):
+        try:
+            await ctx.send(view=ClanDashboard(self.bot))
+        except Exception as e:
+            await ctx.send(traceback.format_exc())
         
         
 async def setup(bot):
