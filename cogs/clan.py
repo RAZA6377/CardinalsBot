@@ -1,16 +1,14 @@
 from __future__ import annotations
 import discord
 from discord.ext import commands
-from discord.ui import LayoutView, Container, Button, Separator, ActionRow, TextDisplay, Modal, TextInput, Select
+from discord.ui import LayoutView, Container, Button, Separator, ActionRow, TextDisplay, Modal, TextInput, MediaGallery, Select
 import traceback
 import time
 from handlers._data import DataManager
 from handlers._account import BsAccount
 
 CLAN_DESCRIPTION = '''
-The Clan System is designed for players who enjoy competitive or progression-based gameplay. Create your own clan, challenge other clans, compete for victories, and level up together.
-
-Each clan has a member limit and must recruit at least 4 players within one week of creation. If a clan fails to meet this requirement, it will be automatically deleted.
+The Clan System is designed for players who enjoy competitive or progression-based gameplay.
 '''
 
 
@@ -47,7 +45,7 @@ class ClanManager:
                     break
         return None, None
         
-    def add_user(self, user: discord.Member, v2_id: str, clan_name: str):
+    async def add_user(self, user: discord.Member, v2_id: str, clan_name: str):
         data = self.get_data()
         role, clan = self.get_user_info(user)
         if role == "Leader":
@@ -60,12 +58,19 @@ class ClanManager:
             return "Players limit reached"
             
         else:
-            user_data = {"name": user.name, "user_id": user.id, "aid": v2_id}
+            user_data = {"name": user.name, "user_id": user.id, "aid": v2_id['id']}
             data[clan_name]['players'].append(user_data)
             self.write(data)
+            clan_role_id = data[clan_name]['clan_role_id']
+            clan_thread_id = data[clan_name]['clan_thread_id']
+            clan_role = user.guild.get_role(clan_role_id)
+            clan_thread = await user.guild.fetch_channel(clan_thread_id)
+            await user.add_roles(clan_role)
+            await clan_thread.add_user(user)
+            await clan_thread.send(f'Welcome {user.mention} to **{clan_name} Clan**')
             return "Success"
             
-    def remove_user(self, user: discord.Member):
+    async def remove_user(self, user: discord.Member):
         data = self.get_data()
         role, clan = self.get_user_info(user)
         if role is None:
@@ -80,10 +85,15 @@ class ClanManager:
                     del data[clan]['players'][index]
                     self.write(data)
                     break
+            clan_role = user.guild.get_role(data[clan]['clan_role_id'])
+            clan_thread = await user.guild.fetch_channel(data[clan]['clan_thread_id'])
+            await user.remove_roles(clan_role)
+            await clan_thread.remove_user(user)
+            await clan_thread.send(f'Removed {user.mention} From **{clan} Clan**')
             return f"User is successfully removed from {clan}"
             
         
-    def create(self, user: discord.Member, clan_name: str, v2_id: str, description: str):
+    async def create(self, user: discord.Member, clan_name: str, v2_id: str, description: str):
         data = self.get_data()
         role, clan = self.get_user_info(user)
         if role == "Leader":
@@ -97,12 +107,18 @@ class ClanManager:
         
         else:
             leader_info = {"name": user.name, "user_id": user.id, "aid": v2_id}
+            channel = user.guild.get_channel(1541464867641229423)
+            clan_thread = await channel.create_thread(name=f'{clan_name} Clan', invitable=False)
+            clan_role = await user.guild.create_role(name=f'[Clan] {clan_name}')
+            await clan_thread.add_user(user)
+            await user.add_roles(clan_role)
+            await clan_thread.send(f'This is a discussion thread for **{clan_name}**.\n**Clan Leader** : {user.mention}')
             data[clan_name] = {
                 'description': description,
                 'leader_id': int(user.id),
                 'players': [leader_info],
-                'clan_role_id': None,
-                'clan_thread_id': None,
+                'clan_role_id': clan_role.id,
+                'clan_thread_id': clan_thread.id,
                 'won' : 0,
                 'lost' : 0,
                 'created_at' : int(time.time())
@@ -111,19 +127,104 @@ class ClanManager:
             self.write(data)
             return 'created', data
             
-    def delete(self, user: discord.Member):
+    async def delete(self, user: discord.Member):
         data = self.get_data()
         role, clan = self.get_user_info(user)
         if role == "Member":
-            return f"User is member of {clan}"
+            return 'error', f"You are member of {clan} clan. You don\'t have permission to delete"
         elif role is None:
-            return "User does not belongs to any clan"
+            return 'error', "User does not belongs to any clan"
         else:
+            clan_data = data[clan]
+            clan_role = user.guild.get_role(clan_data['clan_role_id'])
+            clan_thread = await user.guild.fetch_channel(clan_data['clan_thread_id'])
+            await clan_role.delete(reason='Clan deleted')
+            await clan_thread.delete(reason='Clan deleted')
             del data[clan]
             self.write(data)
-            return f"Successfully deleted {clan}"
+            return 'success', f"Successfully deleted {clan}"
             
+
+class ClanMenu(Select):
+    def __init__(self):
+        clan_menu_options = {'Create Clan': 'create', 'Join Clan': 'join', 'Available Clans': 'list', 'Delete Clan': 'delete'}
+        options = [discord.SelectOption(
+            label=clan_option,
+            value=clan_value
+            )
+            for clan_option, clan_value in clan_menu_options.items()
+        ]
+        
+        super().__init__(placeholder='Select a clan option', options=options, custom_id='clan:clanmenu')
+        self.clan_manager = ClanManager()
+        
+    async def callback(self, interaction: discord.Interaction):
+        selected_value = self.values[0]
+        
+        # Create Clan
+        if selected_value == 'create':
+            try:
+                role, clan_name = self.clan_manager.get_user_info(interaction.user)
+                print(role, clan_name)
+                if role == 'Leader':
+                    await interaction.response.send_message(f'You already own {clan_name} clan', ephemeral=True)
+                    return
+                elif role == 'Member':
+                    await interaction.response.send_message(f'You are already a member of {clan_name} clan', ephemeral=True)
+                    return
+                else:
+                    await interaction.response.send_modal(CreateClanModal())
+            except Exception:
+                await interaction.response.send_message('Something went wrong, contact an admin', ephemeral=True)
+                traceback.print_exc()
+                
+        # Join clan
+        elif selected_value == 'join':
+            try:
+                role, clan_name = self.clan_manager.get_user_info(interaction.user)
+                print(role, clan_name)
+                if role == 'Leader':
+                    await interaction.response.send_message(f'You already own {clan_name} clan', ephemeral=True)
+                    return
+                elif role == 'Member':
+                    await interaction.response.send_message(f'You are already a member of {clan_name} clan', ephemeral=True)
+                    return
+                else:
+                    await interaction.response.send_modal(JoinClanModal())
+            except Exception:
+                await interaction.response.send_message('Something went wrong, contact an admin', ephemeral=True)
+                traceback.print_exc()
             
+        # Clan List
+        elif selected_value == 'list':
+            data = self.clan_manager.get_data()
+            embed = discord.Embed(title='Available Clans', description='A list of available clans', color=0x00FFFF)
+            if data != {}:
+                for clan_name, clan_data in data.items():
+                    embed.add_field(
+                    name=f'Clan: {clan_name}', 
+                    value=f'**Leader** : <@{int(clan_data['leader_id'])}>\n**Clan Role** : <@&{int(clan_data['clan_role_id'])}>\n**Total Member** : {len(clan_data['players'])}\n**Won** : {clan_data['won']}\n**Lost** : {clan_data['lost']}',inline=True)
+                
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            else:
+                await interaction.response.send_message('```No Available Clans Found.```', ephemeral=True)
+                return
+            
+        # Clan delete
+        
+        elif selected_value == 'delete':
+            try:
+                status, result = await self.clan_manager.delete(interaction.user)
+                if status == 'error':
+                    await interaction.response.send_message(result, ephemeral=True)
+                    return
+                await interaction.response.send_message(result, ephemeral=True)
+            except Exception:
+                await interaction.response.send_message('Something went wrong, contact an admin', ephemeral=True)
+                traceback.print_exc()
+        
+        
+        
             
 class ConfirmView(discord.ui.View):
     def __init__(
@@ -164,84 +265,7 @@ class ConfirmView(discord.ui.View):
         except:
             traceback.print_exc()
         
-class CreateClanButton(Button):
-    def __init__(self):
-        super().__init__(
-            label='Create your clan',
-            style=discord.ButtonStyle.secondary,
-            custom_id='clan:create'
-            )
-            
-        self.clan_manager = ClanManager()
-        
-    async def callback(self, interaction: discord.Interaction):
-        try:
-            role, clan_name = self.clan_manager.get_user_info(interaction.user)
-            print(role, clan_name)
-            if role == 'Leader':
-                await interaction.response.send_message(f'You already own {clan_name} clan', ephemeral=True)
-                return
-            elif role == 'Member':
-                await interaction.response.send_message(f'You are already a member of {clan_name} clan', ephemeral=True)
-                return
-            else:
-                await interaction.response.send_modal(CreateClanModal())
-        except Exception as e:
-            await interaction.response.send_message(e, ephemeral=True)
-            traceback.print_exc()
-            
-class JoinButton(Button):
-    def __init__(self):
-        super().__init__(
-            label='Join a clan', 
-            style=discord.ButtonStyle.secondary, 
-            custom_id='clan:join'
-            )
-            
-        self.clan_manager = ClanManager()
-        
-    async def callback(self, interaction: discord.Interaction):
-        print('Join button pressed')
-        try:
-            role, clan_name = self.clan_manager.get_user_info(interaction.user)
-            print(role, clan_name)
-            if role == 'Leader':
-                await interaction.response.send_message(f'You already own {clan_name} clan', ephemeral=True)
-                return
-            elif role == 'Member':
-                await interaction.response.send_message(f'You are already a member of {clan_name} clan', ephemeral=True)
-                return
-            else:
-                await interaction.response.send_modal(JoinClanModal())
-                
-        except Exception as e:
-            await interaction.response.send_message(e, ephemeral=True)
-            traceback.print_exc()
-            
 
-class ClanListButton(Button):
-    def __init__(self):
-        super().__init__(
-            label='Available Clans',
-            style=discord.ButtonStyle.secondary,
-            custom_id='clan:list'
-            )
-        self.clan_manager = ClanManager()
-        
-    async def callback(self, interaction: discord.Interaction):
-        data = self.clan_manager.get_data()
-        embed = discord.Embed(title='Available Clans', description='A list of available clans', color=0x00FFFF)
-        if data != {}:
-            for clan_name, clan_data in data.items():
-                embed.add_field(
-                    name=f'Clan: {clan_name}', 
-                    value=f'**Leader** : <@{int(clan_data['leader_id'])}\n**Clan Role** : <@&{int(clan_data['clan_role_id'])}\n**Total Member** : {len(clan_data['players'])}\n**Won** : {clan_data['won']}\n**Lost** : {clan_data['lost']}',inline=True)
-                
-            await interaction.response.send_message(embed=embed, ephemeral=True)
-        else:
-            await interaction.response.send_message('```No Available Clans Found.```', ephemeral=True)
-            return
-    
 class JoinClanModal(Modal):
     def __init__(self):
         super().__init__(title='Join a clan', custom_id='clan:join_modal')
@@ -283,28 +307,39 @@ class JoinClanModal(Modal):
             self.applicant = interaction.user
             clan_info = self.clan_manager.get_clan(self.selected_clan)
             clan_leader = interaction.guild.get_member(clan_info['leader_id'])
-            clan_thread = interaction.guild.fetch_channel(clan_info['clan_thread_id'])
+            clan_thread = await interaction.guild.fetch_channel(clan_info['clan_thread_id'])
+            print(clan_thread)
             embed = discord.Embed(title='Clan Join Request', description=f"{interaction.user.name} Applied for your clan.\n```Username : {interaction.user.name}\nDiscord Id : {interaction.user.id}\nBs Aid : {self.aid_value}```", color=0x00FFFF)
             
             async def on_approval_accept(interaction: discord.Interaction):
-                clan_role = interaction.guild.get_role(clan_info['clan_role_id'])
-                await self.applicant.add_roles(clan_role)
-                user_add = self.clan_manager.add_user(self.applicant,self.aid_value, self.selected_clan)
-                await interaction.response.edit_message(view=None)
-                if user_add == 'Success':
+                if interaction.user.id == clan_leader.id:
+                    user_add = await self.clan_manager.add_user(self.applicant,self.aid_value, self.selected_clan)
+                    await interaction.response.edit_message(content='**Approval Accepted**',view=None)
+                    if user_add == 'Success':
+                        try:
+                            await self.applicant.send(f'Congratulations! You are now a member of {self.selected_clan} Clan')
+                        except:
+                            pass
+                    else:
+                        try:
+                            await self.applicant.send(user_add)
+                        except:
+                            pass
+                else:
+                    await interaction.response.send_message('You aren\'t clan leader', ephemeral=True)
+        
+            async def on_approval_deny(interaction: discord.Interaction):
+                if interaction.user.id == clan_leader.id:
+                    await interaction.response.edit_message(content='Approval Denied', view=None)
                     try:
-                        await self.applicant.send(f'Congratulations! You are now a member of {self.selected_clan} Clan')
+                        await self.applicant.send(f'Your approval for {self.selected_clan} Clan has been declined. Try again')
                     except:
                         pass
                 else:
-                    await self.applicant.send(user_add)
-        
-            async def on_approval_deny(interaction: discord.Interaction):
-                await interaction.response.edit_message(view=None)
-                await self.applicant.send(f'Your approval for {self.selected_clan} Clan has been declined. Try again')
+                    await interaction.response.send_message('You aren\'t clan leader', ephemeral=True)
             
             async def on_aid_confirm(interaction: discord.Interaction):
-                await clan_thread.send(clan_leader.mention, embed=embed,view=ConfirmView(on_confirm=on_approval_accept(interaction.guild), on_deny=on_approval_deny))
+                await clan_thread.send(clan_leader.mention, embed=embed,view=ConfirmView(on_confirm=on_approval_accept, on_deny=on_approval_deny))
                 await interaction.response.edit_message(content=f"Your request has been sent to clan's thread", view=None)
                 
             async def on_aid_deny(interaction: discord.Interaction):
@@ -316,7 +351,7 @@ class JoinClanModal(Modal):
                 return
             else:
                 aid_confirmation_embed = discord.Embed(title='Account Id Confirmation', description=f'**Tag**: `{self.aid_value['tag']}`\n**Account ID** : `{self.aid_value['id']}`\n**Created** : `{self.aid_value['create_time']}`',color=0x00FFFF)
-                await interaction.response.send_message(embed=aid_confirmation_embed, view=ConfirmView(on_confirm=on_aid_confirm, on_deny=on_aid_deny))
+                await interaction.response.send_message(embed=aid_confirmation_embed, view=ConfirmView(on_confirm=on_aid_confirm, on_deny=on_aid_deny), ephemeral=True)
         
         except Exception as e:
             traceback.print_exc()
@@ -370,39 +405,28 @@ class CreateClanModal(Modal):
                 return
             for clan_name, clan_data in data.items():
                 for player in clan_data['players']:
-                    if self.aid_value['id'] == players['aid']:
+                    if self.aid_value['id'] == player['aid']:
                         await interaction.response.send_message(f'`This account id already exist in {clan_name} members list`', ephemeral=True)
                         return
-            await interaction.response.defer()
-            status, result = self.clan_manager.create(
+                    
+            status, result = await self.clan_manager.create(
                 interaction.user,
                 self.clan_name,
                 self.aid_value['id'],
                 self.clan_desc
                     )
             if status == 'error':
-                await interaction.response.send_message(result, ephemeral=True)
+                await interaction.followup.send(result, ephemeral=True)
                 return
-            
-            channel = interaction.guild.get_channel(1541464867641229423)
-            clan_thread = await channel.create_thread(name=f'{self.clan_name} Clan', invitable=False)
-            clan_role = await interaction.guild.create_role(name=self.clan_name)
-            await clan_thread.add_user(interaction.user)
-            await interaction.user.add_roles(clan_role)
-            await clan_thread.send(f'This is a discussion thread for **{self.clan_name}.\n**Clan Leader** : {interaction.user.mention}')
-            result[self.clan_name]['clan_role_id'] = clan_role.id
-            result[self.clan_name]['clan_thread_id'] = clan_thread.id
-            print(result)
-            self.clan_manager.write(result)
             embed = discord.Embed(
                 title='Clan Created Successfully',
                 description=f'`Clan    Name`: {self.clan_name}\n`Clan       Description` : {self.clan_desc}\n`Leader    Info` : {result[self.clan_name]['players']}\n`Clan Role` : {clan_role.mention}\n`Clan       Thread` : {clan_thread.mention}',
                     color=0x00FFFF
                     )
             print(f'Created a clan by {interaction.user.name}')
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await interaction.response.send(embed=embed, ephemeral=True)
         except Exception:
-          #  await interaction.response.send_message(traceback.format_exc(), ephemeral=True)
+            await interaction.response.send_message('Something went wrong, contact an admin', ephemeral=True)
             traceback.print_exc()
             
 class ClanDashboard(LayoutView):
@@ -412,20 +436,26 @@ class ClanDashboard(LayoutView):
         self._build_dashboard()
         
     def _build_dashboard(self):
+        self.clear_items()
         clan_manager = ClanManager()
         container = Container()
         sep = Separator()
-        clan_text = TextDisplay("## Clan System")
-        container.add_item(clan_text)
+        clan_banner = MediaGallery(
+                discord.MediaGalleryItem(
+                    "https://cdn.discordapp.com/attachments/1539217756891643924/1543694391552774284/file_00000000f6788211ab4c8bd6ecaa42d8.png?ex=6a95ccef&is=6a947b6f&hm=12b8fa7d584f897e29412fd42eeccb804f89ee8412775aadb147c7b9bf9e99cd&"
+                )
+                    
+        )
+        container.add_item(clan_banner)
         container.add_item(sep)
-        clan_desc = TextDisplay(f"```js\n{CLAN_DESCRIPTION}\n```")
+        menu_row = ActionRow()
+        clan_desc = TextDisplay(f"{CLAN_DESCRIPTION}")
         container.add_item(clan_desc)
         container.add_item(sep)
-        button_row = ActionRow()
-        button_row.add_item(JoinButton())
-        button_row.add_item(CreateClanButton())
-        button_row.add_item(ClanListButton())
-        container.add_item(button_row)
+        menu_row.add_item(ClanMenu())
+        container.add_item(menu_row)
+        
+        
         container.accent_color = 0x00FFFF
         self.add_item(container)
         
@@ -435,12 +465,16 @@ class ClanCog(commands.Cog):
         self.bot = bot
         
     @commands.command()
+    @commands.has_permissions(administrator=True)
     async def clandash(self, ctx):
         try:
             await ctx.send(view=ClanDashboard(self.bot))
         except Exception:
             await ctx.send(traceback.format_exc())
             
+    @commands.command()
+    async def claninfo(self, clan_name: str):
+        pass
         
         
 async def setup(bot):

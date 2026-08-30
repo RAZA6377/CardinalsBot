@@ -34,32 +34,12 @@ class WelcomeLayout(LayoutView):
                 )
                     
         )
-        welcome_btn = Button(
-            label="Welcome",
-            style=discord.ButtonStyle.secondary,
-            emoji="<:cardinal:1540407908771307690>",
-        )
-        button_action_row = ActionRow(welcome_btn)
-
-        async def welcome_btn_cb(interaction: discord.Interaction):
-            if interaction.user.id == member.id:
-                await interaction.response.send_message(
-                    "You cant welcome yourself dude", ephemeral=True
-                )
-                return
-            await interaction.channel.send(
-                f"`{interaction.user.name}` Welcomes `{member.name}`"
-            )
-
-        welcome_btn.callback = welcome_btn_cb
-
         container = Container(
             server_name,
             sep,
             user_section,
             sep,
             welcome_banner,
-           # button_action_row,
             accent_color=0x00FFFF,
         )
         self.add_item(container)
