@@ -1,5 +1,7 @@
 from __future__ import annotations
+import typing
 import discord
+from discord import app_commands
 from discord.ext import commands
 from discord.ui import LayoutView, Container, Button, Separator, ActionRow, TextDisplay, Modal, TextInput, MediaGallery, Select
 import traceback
@@ -44,6 +46,24 @@ class ClanManager:
                     return "Member", clan_name
                     break
         return None, None
+        
+    async def update_score(self, interaction: discord.Interaction, clan_name: str, option: str, points: int):
+        data = self.get_data()
+        clan_info = data.get(clan_name)
+        if clan_info is None:
+            return 'error', 'Clan not found'
+        if option not in ('won', 'lost'):
+            return 'error', 'Option not valid'
+        
+        if points < 0:
+            return 'error', 'Points can\'t be in negative'
+            
+        data[clan_name][option] += points
+        self.write(data)
+        clan_leader = interaction.guild.get_member(int(data[clan_name]['leader_id']))
+        clan_thread = interaction.guild.fetch_channel(int(data[clan_name]['clan_thread_id']))
+        await clan_thread.send(f'{clan_leader.mention}\n```Updated clan {option} to {points}\nTotal = {data[clan_name][option]}```')
+        return 'success', f'Updated **{clan_name}** {option} Points to {data[clan_name][option]}'
         
     async def add_user(self, user: discord.Member, v2_id: str, clan_name: str):
         data = self.get_data()
@@ -121,6 +141,7 @@ class ClanManager:
                 'clan_thread_id': clan_thread.id,
                 'won' : 0,
                 'lost' : 0,
+                'status': None,
                 'created_at' : int(time.time())
             }
             
@@ -355,7 +376,7 @@ class JoinClanModal(Modal):
         
         except Exception as e:
             traceback.print_exc()
-            await interaction.response.send_message(e, ephemeral=True)
+            await interaction.response.send_message(str(e), ephemeral=True)
             
 class CreateClanModal(Modal):
     def __init__(self):
@@ -420,11 +441,11 @@ class CreateClanModal(Modal):
                 return
             embed = discord.Embed(
                 title='Clan Created Successfully',
-                description=f'`Clan    Name`: {self.clan_name}\n`Clan       Description` : {self.clan_desc}\n`Leader    Info` : {result[self.clan_name]['players']}\n`Clan Role` : {clan_role.mention}\n`Clan       Thread` : {clan_thread.mention}',
+                description=f'`Clan Name`: {self.clan_name}\n`Clan Description` : {self.clan_desc}\n`Leader Info` : \n- {result[self.clan_name]['players']}\n`Clan Role` : <@&{result[self.clan_name]['clan_role_id']}>\n`Clan Thread` : <#{result[self.clan_name]['clan_thread_id']}>',
                     color=0x00FFFF
                     )
             print(f'Created a clan by {interaction.user.name}')
-            await interaction.response.send(embed=embed, ephemeral=True)
+            await interaction.response.send_message(embed=embed, ephemeral=True)
         except Exception:
             await interaction.response.send_message('Something went wrong, contact an admin', ephemeral=True)
             traceback.print_exc()
@@ -463,18 +484,43 @@ class ClanDashboard(LayoutView):
 class ClanCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.clan_manager = ClanManager()
         
-    @commands.command()
-    @commands.has_permissions(administrator=True)
-    async def clandash(self, ctx):
+    async def clan_choices(
+        self, 
+        interaction: discord.Interaction,
+        current: str
+    ):
+        data = self.clan_manager.get_data()
+        return [
+            app_commands.Choice(name=clan, value=clan)
+            for clan, clan_data in data.items()
+            if current.lower() in clan.lower()
+        ][:5]
+    
+    clan_group = app_commands.Group(name='clan', description='Clan group')
+    
+    @clan_group.command(name='panel', description='Clan panel')
+    @app_commands.checks.has_permissions(administrator=True)
+    async def panel(self, interaction: discord.Interaction):
         try:
-            await ctx.send(view=ClanDashboard(self.bot))
+            await interaction.response.send_message('Sent', ephemeral=True)
+            await interaction.channel.send(view=ClanDashboard(self.bot))
         except Exception:
-            await ctx.send(traceback.format_exc())
-            
-    @commands.command()
-    async def claninfo(self, clan_name: str):
-        pass
+            await interaction.response.send_message(traceback.format_exc(), ephemeral=True)
+        
+    @clan_group.command(name='update_score', description='Update score for a clan')
+    @app_commands.checks.has_permissions(administrator=True)
+    @app_commands.autocomplete(clan_name=clan_choices)
+    async def update_score(self, interaction: discord.Interaction, clan_name: str, option: typing.Literal['won', 'lost'], points: int):
+        try:
+            status, result = await self.clan_manager.update_score(interaction, clan_name, option, points)
+            if status == 'error':
+                await interaction.response.send_message(result, ephemeral=True)
+            await interaction.response.send_message(f'```{result}```')
+        except Exception as e:
+            await interaction.response.send_message(str(e), ephemeral=True)
+            traceback.print_exc()
         
         
 async def setup(bot):

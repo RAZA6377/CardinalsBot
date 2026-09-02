@@ -2,3 +2,4 @@ discord
 jishaku
 termcolor
 dotenv
+requests
