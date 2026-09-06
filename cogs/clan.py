@@ -18,10 +18,12 @@ class ClanManager:
     def __init__(self):
         self.data_manager = DataManager()
         self.file = self.data_manager.get_data_dir() / "clan.json"
+        self.challenge_file = self.data_manager.get_data_dir() / "clan_challenges.json"
         self.clan_limit = 5
         self.players_limit = 8
         
         
+    
     def get_data(self):
         return self.data_manager.read_file(self.file)
         
@@ -61,8 +63,8 @@ class ClanManager:
         data[clan_name][option] += points
         self.write(data)
         clan_leader = interaction.guild.get_member(int(data[clan_name]['leader_id']))
-        clan_thread = interaction.guild.fetch_channel(int(data[clan_name]['clan_thread_id']))
-        await clan_thread.send(f'{clan_leader.mention}\n```Updated clan {option} to {points}\nTotal = {data[clan_name][option]}```')
+        clan_thread = await interaction.guild.fetch_channel(int(data[clan_name]['clan_thread_id']))
+        await clan_thread.send(f'{clan_leader.mention}\n```Updated clan {option} Points to {points}\nTotal = {data[clan_name][option]}```')
         return 'success', f'Updated **{clan_name}** {option} Points to {data[clan_name][option]}'
         
     async def add_user(self, user: discord.Member, v2_id: str, clan_name: str):
@@ -164,6 +166,18 @@ class ClanManager:
             del data[clan]
             self.write(data)
             return 'success', f"Successfully deleted {clan}"
+            
+    def get_challenge_data(self):
+        return self.data_manager.read_file(self.challenge_file)
+        
+    def challenge_write(self, data):
+        return self.data_manager.save_file(self.challenge_file, data)
+        
+    async def challenge(self, user: discord.Member, vs_clan: str):
+        role, clan = self.get_user_info()
+        if role == 'Member' or None:
+            return 'error', 'You don\'t have permission to challenge'
+        
             
 
 class ClanMenu(Select):
@@ -522,6 +536,12 @@ class ClanCog(commands.Cog):
             await interaction.response.send_message(str(e), ephemeral=True)
             traceback.print_exc()
         
+    @clan_group.command(name='challenge', description='Challenge a clan')
+    @app_commands.autocomplete(clan_name=clan_choices)
+    async def challenge(self, interaction: discord.Interaction, clan_name: str):
+        role, clan = self.clan_manager.get_user_info()
+        try:
+            
         
 async def setup(bot):
     await bot.add_cog(ClanCog(bot))
