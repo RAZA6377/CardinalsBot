@@ -540,7 +540,7 @@ class ClanCog(commands.Cog):
     @app_commands.autocomplete(clan_name=clan_choices)
     async def challenge(self, interaction: discord.Interaction, clan_name: str):
         role, clan = self.clan_manager.get_user_info()
-        try:
+        pass
             
         
 async def setup(bot):

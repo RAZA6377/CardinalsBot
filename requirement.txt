@@ -3,3 +3,4 @@ jishaku
 termcolor
 dotenv
 requests
+openai
