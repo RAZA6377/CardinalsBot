@@ -464,6 +464,59 @@ class CreateClanModal(Modal):
             await interaction.response.send_message('Something went wrong, contact an admin', ephemeral=True)
             traceback.print_exc()
             
+class ChallengeDashboard(LayoutView):
+    def __init__(self, clan):
+        super().__init__(timeout=None)
+        self.selected_players = []
+        self.clan_manager = ClanManager()
+        self._create_dashboard()
+        
+    def _create_dashboard(self):
+        self.clear_items()
+        container = Container()
+        sep = Separator()
+        
+        header = TextDisplay('Challenge Dashboard')
+        container.add_item(header)
+        container.add_item(sep)
+        choose_text = TextDisplay('```Choose your players```')
+        container.add_item(choose_text)
+        choose_row = ActionRow()
+        options = [
+            discord.SelectOption(
+                label=str(player['name']),
+                value=int(player['uid'])
+            )
+            for player in self.clan_manager.get_data()[clan]['players']
+        ]
+        player_selector = Select(
+            placeholder='Select your warriors',
+            options=options
+            custom_id='challenge:warriors'
+            )
+        player_selector.callback = on_player_selection
+        choose_row.add_item(player_selector)
+        player_selected_text = ""
+        index = 0
+        for selected_player in self.selected_players:
+            for clan_player in self.clan_manager.get_data()[clan]['players']:
+                if int(clan_player['uid']) == int(selected_player):
+                    player_selected_text += f"# {index+1} -- {clan_player['name']}\n> U-ID : {clan_player['uid']}\n> A-ID : {clan_player['aid']}"
+        selected_text = TextDisplay(f'```{player_selected_text}```')
+        container.add_item(choose_row)
+        container.add_item(selected_text)
+        
+        async def on_player_selection(self, interaction: discord.Interaction):
+            for i in self.values:
+                self.selected_players.append(i)
+            self._create_dashboard()
+            
+        self.add_item(container)
+        
+        
+        
+    
+        
 class ClanDashboard(LayoutView):
     def __init__(self, bot):
         super().__init__(timeout=None)
@@ -539,8 +592,24 @@ class ClanCog(commands.Cog):
     @clan_group.command(name='challenge', description='Challenge a clan')
     @app_commands.autocomplete(clan_name=clan_choices)
     async def challenge(self, interaction: discord.Interaction, clan_name: str):
-        role, clan = self.clan_manager.get_user_info()
-        pass
+        role, clan = self.clan_manager.get_user_info(interaction.user)
+        challenge_data = self.clan_manager.challenge_data()
+        
+        if clan_name == clan:
+            await interaction.response.send_messsge('You cannot challenge your own clan', ephemeral=True)
+            return
+        
+        if role == 'Member' or None:
+            await interaction.response.send_messsge('You cannot challenge any clan', ephemeral=True)
+            return
+        
+        if clan or clan_name in challenge_data:
+            await interaction.response.send_messsge('Your or opponent clan is already in a match', ephemeral=True)
+            return
+        
+        
+        
+        
             
         
 async def setup(bot):

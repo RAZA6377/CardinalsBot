@@ -40,7 +40,7 @@ class MessageBox(LayoutView):
         sep = Separator()
         
         message = TextDisplay(self.msg)
-        credit_text = TextDisplay('-# Cardinals AI')
+        credit_text = TextDisplay('-# CardinalsAI')
         container.add_item(message)
         container.add_item(sep)
         container.add_item(credit_text)
