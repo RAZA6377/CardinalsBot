@@ -1,1 +1,32 @@
-{}
+{
+    "Cardi": {
+        "description": "bzz",
+        "leader_id": 924617239301324856,
+        "players": [{
+            "name": "raza.py",
+            "user_id": 924617239301324856,
+            "aid": "a-b6841897"
+        }],
+        "clan_role_id": 1546240314371481763,
+        "clan_thread_id": 1546240310550593717,
+        "won": 0,
+        "lost": 0,
+        "status": null,
+        "created_at": 1788722821
+    },
+    "TESt": {
+        "description": "yeah",
+        "leader_id": 1395772991769415780,
+        "players": [{
+            "name": "codielc",
+            "user_id": 1395772991769415780,
+            "aid": "a-187"
+        }],
+        "clan_role_id": 1546240922923171952,
+        "clan_thread_id": 1546240921287262400,
+        "won": 0,
+        "lost": 0,
+        "status": null,
+        "created_at": 1788722968
+    }
+}
