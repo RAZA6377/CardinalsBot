@@ -168,6 +168,8 @@ class TicketBox(LayoutView):
             )
         )
         
+        container.add_item(cardinals_text)
+        container.add_item(sep)
         title = TextDisplay('## Support Panel')
         container.add_item(title)
         container.add_item(sep)
@@ -182,8 +184,7 @@ class TicketBox(LayoutView):
         button_row = ActionRow()
         button_row.add_item(CreateTicketButton())
         container.add_item(button_row)
-        container.add_item(sep)
-        container.add_item(cardinals_text)
+        
         container.accent_color = 0x00FFFF
         self.add_item(container)
     
