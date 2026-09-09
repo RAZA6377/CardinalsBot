@@ -167,7 +167,7 @@ class TicketBox(LayoutView):
                 "https://cdn.discordapp.com/attachments/1539651471383986287/1547183017670475846/file_00000000067481fa99a0d01ba3ba92b5.png?ex=6aa27df8&is=6aa12c78&hm=dcac19d134ad8a38ada49de1c47975f1a925e8f07b0fb57466e723bc0a758d4c&"
             )
         )
-        container.add_item(cardinals_text)
+        
         title = TextDisplay('## Support Panel')
         container.add_item(title)
         container.add_item(sep)
@@ -182,6 +182,8 @@ class TicketBox(LayoutView):
         button_row = ActionRow()
         button_row.add_item(CreateTicketButton())
         container.add_item(button_row)
+        container.add_item(sep)
+        container.add_item(cardinals_text)
         container.accent_color = 0x00FFFF
         self.add_item(container)
     
