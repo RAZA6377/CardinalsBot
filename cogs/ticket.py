@@ -164,7 +164,7 @@ class TicketBox(LayoutView):
         sep = Separator()
         cardinals_text = MediaGallery(
             discord.MediaGalleryItem(
-                "https://cdn.discordapp.com/attachments/1539217756891643924/1543694391552774284/file_00000000f6788211ab4c8bd6ecaa42d8.png?ex=6a95ccef&is=6a947b6f&hm=12b8fa7d584f897e29412fd42eeccb804f89ee8412775aadb147c7b9bf9e99cd&"
+                "https://cdn.discordapp.com/attachments/1539651471383986287/1547183017670475846/file_00000000067481fa99a0d01ba3ba92b5.png?ex=6aa27df8&is=6aa12c78&hm=dcac19d134ad8a38ada49de1c47975f1a925e8f07b0fb57466e723bc0a758d4c&"
             )
         )
         container.add_item(cardinals_text)
