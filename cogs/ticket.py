@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 from discord.utils import get
 from handlers._data import DataManager
-from discord.ui import LayoutView, Button, Separator, TextDisplay, Container, ActionRow, TextInput, Modal
+from discord.ui import LayoutView, Button, Separator, TextDisplay, Container, ActionRow, TextInput, Modal, MediaGallery
 
 class TicketManager:
     def __init__(self):
@@ -76,11 +76,14 @@ class TicketManager:
             
 class DeleteTicketButton(Button):
     def __init__(self):
-        super().__init__(label='Delete Ticket', style=discord.ButtonStyle.danger, custom_id='ticket:close')
+        super().__init__(label='Delete Ticket', style=discord.ButtonStyle.danger, custom_id='ticket:close', timeout=None)
         self.ticket_manager = TicketManager()
         
     async def callback(self, interaction: discord.Interaction):
         try:
+            if not interaction.user.guild_permissions.administrator:
+                await interaction.response.send_message('You don\'t have administrator permission', ephemeral=True)
+                return
             status, result = await self.ticket_manager.delete_ticket(interaction.channel)
             if status == 'error':
                 await interaction.response.send_message(result)
@@ -159,6 +162,12 @@ class TicketBox(LayoutView):
     def _build_box(self):
         container = Container()
         sep = Separator()
+        cardinals_text = MediaGallery(
+            discord.MediaGalleryItem(
+                "https://cdn.discordapp.com/attachments/1539217756891643924/1543694391552774284/file_00000000f6788211ab4c8bd6ecaa42d8.png?ex=6a95ccef&is=6a947b6f&hm=12b8fa7d584f897e29412fd42eeccb804f89ee8412775aadb147c7b9bf9e99cd&"
+            )
+        )
+        container.add_item(cardinals_text)
         title = TextDisplay('## Support Panel')
         container.add_item(title)
         container.add_item(sep)

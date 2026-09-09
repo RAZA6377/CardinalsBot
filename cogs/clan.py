@@ -262,7 +262,28 @@ class ClanMenu(Select):
                 traceback.print_exc()
         
         
+class ConfirmButton(Button):
+    def __init__(self, on_confirm):
+        super().__init__(label='Confirm', style=discord.ButtonStyle.primary, emoji='<a:tick:1546932427103150170>', timeout=None)
+        self.on_confirm = on_confirm
         
+    async def callback(self, interaction: discord.Interaction):
+        try:
+            await self.on_confirm(interaction)
+        except:
+            traceback.print_exc()
+            
+class DenyButton(Button):
+    def __init__(self, on_deny):
+        super().__init__(label='Deny', style=discord.ButtonStyle.secondary, emoji='<:Cross69:1546933008274165914>', timeout=None)
+        self.on_deny = on_deny
+        
+    async def callback(self, interaction: discord.Interaction):
+        try:
+            await self.on_deny(interaction)
+        except:
+            traceback.print_exc()
+    
             
 class ConfirmView(discord.ui.View):
     def __init__(
@@ -274,34 +295,8 @@ class ConfirmView(discord.ui.View):
 
         self.on_confirm = on_confirm
         self.on_deny = on_deny
-
-    @discord.ui.button(
-        label="Confirm",
-        style=discord.ButtonStyle.success
-    )
-    async def confirm(
-        self,
-        interaction: discord.Interaction,
-        button: discord.ui.Button
-    ):
-        try:
-            await self.on_confirm(interaction)
-        except:
-            traceback.print_exc()
-
-    @discord.ui.button(
-        label="Deny",
-        style=discord.ButtonStyle.danger
-    )
-    async def deny(
-        self,
-        interaction: discord.Interaction,
-        button: discord.ui.Button
-    ):
-        try:
-            await self.on_deny(interaction)
-        except:
-            traceback.print_exc()
+        self.add_item(ConfirmButton(self.on_confirm))
+        self.add_item(DenyButton(self.on_deny))
         
 
 class JoinClanModal(Modal):
