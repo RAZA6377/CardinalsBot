@@ -53,7 +53,7 @@ class WelcomeCog(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         try:
-            channel = member.guild.get_channel(1539651470327156911)
+            channel = member.guild.get_channel(1540673634367176754)
             layout = WelcomeLayout(member)
             await channel.send(view=layout)
         except Exception as e:
