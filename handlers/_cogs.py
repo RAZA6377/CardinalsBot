@@ -27,7 +27,7 @@ class CogHandler:
         if cog_list == []:
             return [], []
         else:
-            await bot.load_extension('jishaku')
+            await bot.load_extension("jishaku")
             for cog in cog_list:
                 try:
                     await bot.load_extension(f"cogs.{cog}")

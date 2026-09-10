@@ -10,7 +10,15 @@ class CogManager(commands.Cog):
     )
     @commands.is_owner()
     async def manager_cog(self, ctx):
-        available_sub = ["load", "unload", "list", "loadall", "unloadall", "reload", "reloadall"]
+        available_sub = [
+            "load",
+            "unload",
+            "list",
+            "loadall",
+            "unloadall",
+            "reload",
+            "reloadall",
+        ]
         await ctx.send(f"`Enter a valid subcommand` : {available_sub}")
 
     @manager_cog.command(name="load", description="Loads a cog")

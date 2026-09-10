@@ -9,7 +9,7 @@ from discord.ui import (
     Separator,
     Thumbnail,
     ActionRow,
-    MediaGallery
+    MediaGallery,
 )
 
 
@@ -29,10 +29,9 @@ class WelcomeLayout(LayoutView):
         )
         user_section = Section(user_name, accessory=user_icon)
         welcome_banner = MediaGallery(
-                discord.MediaGalleryItem(
-                    "https://cdn.discordapp.com/attachments/1017630659885420554/1540413350893195274/file_000000003b6c8211a11ece1e3be103e2.png?ex=6a89dd3a&is=6a888bba&hm=c0da9f5283bab44851268e6c038da34cf35f3f0987a17140c7a7b2ae875de98b&"
-                )
-                    
+            discord.MediaGalleryItem(
+                "https://cdn.discordapp.com/attachments/1539651471383986287/1547629694424186880/file_000000009f9081f5bec030ed95de7a14.png?ex=6aa41df8&is=6aa2cc78&hm=845307f74aa463ffc8c89904ad203cc426e0720d5e27acb35a4d7deb9f501f40&"
+            )
         )
         container = Container(
             server_name,
@@ -48,8 +47,7 @@ class WelcomeLayout(LayoutView):
 class WelcomeCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        
-        
+
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         try:
@@ -59,7 +57,6 @@ class WelcomeCog(commands.Cog):
         except Exception as e:
             print(f"ERROR while welcoming {member.name}: {type(e).__name__}:  {e}")
             pass
-            
 
     @commands.command(name="welcome_test", description="Test Welcome Message")
     async def welcome_test(self, ctx):
