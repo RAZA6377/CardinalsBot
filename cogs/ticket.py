@@ -1,19 +1,22 @@
+import traceback
+
 import discord
-from discord.ext import commands
 from discord import app_commands
-from discord.utils import get
-from handlers._data import DataManager
+from discord.ext import commands
 from discord.ui import (
-    LayoutView,
+    ActionRow,
     Button,
+    Container,
+    LayoutView,
+    MediaGallery,
+    Modal,
     Separator,
     TextDisplay,
-    Container,
-    ActionRow,
     TextInput,
-    Modal,
-    MediaGallery,
 )
+from discord.utils import get
+
+from handlers._data import DataManager
 
 
 class TicketManager:
@@ -69,8 +72,10 @@ class TicketManager:
                 with open(f"{ticket.name}.txt", "w") as transcript:
                     for message in channel_msgs:
                         transcript.write(f"{message.author.name} : {message.content}\n")
-                        for attachment in message.attachments:
-                            transcript.write(f"Attachment : {attachment.url}\n")
+                        transcript.writelines(
+                            f"Attachment : {attachment.url}\n"
+                            for attachment in message.attachments
+                        )
 
                 await msg.edit(content="## Saved Transcript. Sending to log channel")
                 log_channel = channel.guild.get_channel(self.get_log_channel())

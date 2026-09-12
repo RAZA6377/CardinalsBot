@@ -1,23 +1,25 @@
 # Cardinals Discord Bot By raza.py
 from __future__ import annotations
 
-import discord
-from discord.ext import commands
-from termcolor import colored
-import traceback
 import asyncio
 import io
-import textwrap
-from contextlib import redirect_stdout
-from dotenv import load_dotenv
 import os
+import textwrap
+import traceback
 import typing
+from contextlib import redirect_stdout
+
+import discord
+from discord.ext import commands
+from dotenv import load_dotenv
+from termcolor import colored
+
+from handlers._account import BsAccount
 
 # --- Handlers ---
 from handlers._cogs import CogHandler
-from handlers._printer import ColorPrint
 from handlers._data import DataManager
-from handlers._account import BsAccount
+from handlers._printer import ColorPrint
 
 # --- Handlers ----
 load_dotenv()
@@ -121,7 +123,7 @@ async def eval(ctx: commands.Context, *, body: str):
 async def sync(
     ctx: commands.Context,
     guilds: commands.Greedy[discord.Object],
-    spec: typing.Optional[typing.Literal["~", "*", "^"]] = None,
+    spec: typing.Literal["~", "*", "^"] | None = None,
 ) -> None:
     if not guilds:
         if spec == "~":

@@ -1,24 +1,27 @@
 from __future__ import annotations
+
+import time
+import traceback
 import typing
+
 import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import (
-    LayoutView,
-    Container,
-    Button,
-    Separator,
     ActionRow,
-    TextDisplay,
-    Modal,
-    TextInput,
+    Button,
+    Container,
+    LayoutView,
     MediaGallery,
+    Modal,
     Select,
+    Separator,
+    TextDisplay,
+    TextInput,
 )
-import traceback
-import time
-from handlers._data import DataManager
+
 from handlers._account import BsAccount
+from handlers._data import DataManager
 
 CLAN_DESCRIPTION = """
 The Clan System is designed for players who enjoy competitive or progression-based gameplay.
@@ -134,8 +137,8 @@ class ClanManager:
             clan_thread = await user.guild.fetch_channel(data[clan]["clan_thread_id"])
             await user.remove_roles(clan_role)
             await clan_thread.remove_user(user)
-            await clan_thread.send(f"Removed {user.mention} From **{clan} Clan**")
-            return f"User is successfully removed from {clan}"
+            await clan_thread.send(f"{user.mention} Left From **{clan} Clan**")
+            return f"{user.mention} Successfully left from {clan} Clan"
 
     async def create(
         self, user: discord.Member, clan_name: str, v2_id: str, description: str
@@ -213,6 +216,7 @@ class ClanMenu(Select):
         clan_menu_options = {
             "Create Clan": "create",
             "Join Clan": "join",
+            "Leave Clan": "leave",
             "Available Clans": "list",
             "Delete Clan": "delete",
         }
@@ -274,6 +278,18 @@ class ClanMenu(Select):
             except Exception:
                 await interaction.response.send_message(
                     "Something went wrong, contact an admin", ephemeral=True
+                )
+                traceback.print_exc()
+
+        # Clan leave
+        elif selected_value == "leave":
+            try:
+                result = await self.clan_manager.remove_user(interaction.user)
+                await interaction.response.send_message(str(result), ephemeral=True)
+            except Exception as e:
+                await interaction.response.send_message(
+                    f"Something went wrong, contact an admin\n**Error** : `{e}`",
+                    ephemeral=True,
                 )
                 traceback.print_exc()
 
@@ -451,14 +467,13 @@ class JoinClanModal(Modal):
                     ),
                 )
                 await interaction.response.edit_message(
-                    content=f"Your request has been sent to clan's thread", view=None
+                    content="Your request has been sent to clan's thread", view=None
                 )
 
             async def on_aid_deny(interaction: discord.Interaction):
                 await interaction.response.edit_message(
                     content="Request Cancelled.", view=None
                 )
-                return
 
             if self.aid_value is None:
                 await interaction.response.send_message(
@@ -660,7 +675,7 @@ class ChallengeDashboard(LayoutView):
                 leader = interaction.guild.get_member(oppo_leader_id)
                 thread = await interaction.guild.fetch_channel(oppo_thread_id)
                 await thread.send(
-                    f'{leader.mention} Your clan have challenge from **{self.clan}** clan.\nTo accept challenge select players and press Confirm else Deny\n{self.clan} Represents : {players_data}'
+                    f"{leader.mention} Your clan have challenge from **{self.clan}** clan.\nTo accept challenge select players and press Confirm else Deny\n{self.clan} Represents : {players_data}"
                 )
                 await thread.send(view=self)
                 await interaction.response.send_message("Challenge Sent")
@@ -777,8 +792,6 @@ class ClanCog(commands.Cog):
                     "You cannot challenge any clan", ephemeral=True
                 )
                 return
-
-            
 
             await interaction.response.send_message(
                 view=ChallengeDashboard(clan, opponent_clan)

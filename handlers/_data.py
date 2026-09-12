@@ -1,7 +1,7 @@
-from pathlib import Path
-from handlers._printer import ColorPrint
 import json
-from typing import Dict
+from pathlib import Path
+
+from handlers._printer import ColorPrint
 
 
 class DataManager:
@@ -13,7 +13,7 @@ class DataManager:
         return self.data_dir
 
     def get_data_files(self):
-        files = list()
+        files = []
         for file in self.get_data_dir.iterdir():
             files.append(file)
         return files
@@ -23,10 +23,10 @@ class DataManager:
             with open(file_path, "r") as f:
                 data = json.load(f)
         except Exception as e:
-            ColorPrint().failed(f"Error while reading {file_path} : {e}")
+            ColorPrint().failed(f"Error while reading {file_path} : {e!s}")
             data = {}
         return data
 
-    def save_file(self, file: Path, data: Dict):
+    def save_file(self, file: Path, data: dict):
         with open(file, "w") as f:
             json.dump(data, f, indent=4)

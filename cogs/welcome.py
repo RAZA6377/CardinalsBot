@@ -1,15 +1,13 @@
 import discord
 from discord.ext import commands
 from discord.ui import (
-    LayoutView,
-    Button,
     Container,
-    TextDisplay,
+    LayoutView,
+    MediaGallery,
     Section,
     Separator,
+    TextDisplay,
     Thumbnail,
-    ActionRow,
-    MediaGallery,
 )
 
 
@@ -56,7 +54,6 @@ class WelcomeCog(commands.Cog):
             await channel.send(view=layout)
         except Exception as e:
             print(f"ERROR while welcoming {member.name}: {type(e).__name__}:  {e}")
-            pass
 
     @commands.command(name="welcome_test", description="Test Welcome Message")
     async def welcome_test(self, ctx):

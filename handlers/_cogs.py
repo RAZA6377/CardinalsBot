@@ -1,6 +1,7 @@
-from discord.ext import commands
-from pathlib import Path
 import traceback
+from pathlib import Path
+
+from discord.ext import commands
 
 
 class CogHandler:

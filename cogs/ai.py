@@ -1,9 +1,10 @@
-import discord
-from discord.ext import commands
-from openai import OpenAI
 import traceback
+
+import discord
 from discord import app_commands
-from discord.ui import TextDisplay, LayoutView, Container, Separator
+from discord.ext import commands
+from discord.ui import Container, LayoutView, Separator, TextDisplay
+from openai import OpenAI
 
 
 class AiManager:
