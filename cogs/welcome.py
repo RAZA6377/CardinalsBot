@@ -37,7 +37,7 @@ class WelcomeLayout(LayoutView):
             user_section,
             sep,
             welcome_banner,
-            accent_color=0x00FFFF,
+            accent_color=0x073352,
         )
         self.add_item(container)
 
