@@ -122,9 +122,9 @@ class ClanManager:
         data = self.get_data()
         role, clan = self.get_user_info(user)
         if role is None:
-            return "User does not belong to any clan"
+            return "You don\'t belong to any clan"
         elif role == "Leader":
-            return "User owns this clan"
+            return "You cannot leave this clan. You own it."
 
         else:
             clan_players = data[clan]["players"]
