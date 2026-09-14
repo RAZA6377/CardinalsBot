@@ -22,32 +22,32 @@ class RoleManager:
             if str(guild.id) in data:
                 pass
             else:
-                data[str(guild.id)] = {'roles': []}
+                data[str(guild.id)] = {'roles': {}}
                 self.save_data(data)
         except:
             traceback.print_exc()
             pass 
-        
+
     def get_guild_roles(self, guild: discord.Guild):
         self.initiate_guild(guild)
         data = self.get_data()
         return data[str(guild.id)]['roles']
-        
-    def add_role(self, guild: discord.Guild, role: discord.Role):
+
+    def add_role(self, guild: discord.Guild, role: discord.Role, emoji: str):
         data = self.get_data()
         guild_roles = self.get_guild_roles(guild)
         if role.id in guild_roles:
             return 'error', 'Role already exists'
-        data[str(guild.id)]['roles'].append(role.id)
+        data[str(guild.id)]['roles'][str(role.id)] = emoji
         self.save_data(data)
         return 'success', f'Added `{role.name}` To Button Role'
         
     def remove_role(self, guild: discord.Guild, role: discord.Role):
         data = self.get_data()
         guild_roles = self.get_guild_roles(guild)
-        if role.id not in guild_roles:
+        if str(role.id) not in guild_roles:
             return 'error', 'Role doesn\'t exist'
-        data[str(guild.id)]['roles'].remove(role.id)
+        del data[str(guild.id)]['roles'][str(role.id)]
         self.save_data(data)
         return 'success', f'Removed `{role.name}` From Button Role'
         
@@ -64,16 +64,17 @@ class RoleManager:
             traceback.print_exc()
             
 class RoleButton(Button):
-    def __init__(self, role: discord.Role):
+    def __init__(self, role: discord.Role, emoji: str):
         self.role = role
-        super().__init__(label=self.role.name, style=discord.ButtonStyle.secondary, custom_id=f'role:button:{self.role.id}')
+      #  self.emoji = emoji
+        super().__init__(label=self.role.name, style=discord.ButtonStyle.secondary, emoji=emoji, custom_id=f'role:button:{self.role.id}')
         
     async def callback(self, interaction: discord.Interaction):
         try:
             result = await RoleManager().manage_role(interaction.user, self.role)
             layout = LayoutView()
             sep = Separator()
-            result_status = TextDisplay(f'<a:tick:1546932427103150170> — Role Result')
+            result_status = TextDisplay(f'## <a:tick:1546932427103150170> — Role Result')
             result_text = TextDisplay(result)
             result_footer = TextDisplay('`The Cardinals`')
             container = Container(
@@ -103,12 +104,12 @@ class RoleLayout(LayoutView):
         roles = self.role_manager.get_guild_roles(self.guild)
         container = Container()
         sep = Separator()
-        title_text = TextDisplay('### [ Self Roles ]')
+        title_text = TextDisplay('# [ Self Roles ]')
         container.add_item(title_text)
-        for role in roles:
-            role_data = self.guild.get_role(role)
-            role_button = RoleButton(role_data)
-            role_section = Section(f'### {role_data.name}', accessory=role_button)
+        for role, emoji in roles.items():
+            role_data = self.guild.get_role(int(role))
+            role_button = RoleButton(role_data, emoji)
+            role_section = Section(f'` {role_data.name} `', accessory=role_button)
             container.add_item(sep)
             container.add_item(role_section)
         container.add_item(sep)
@@ -129,9 +130,9 @@ class ButtonRoleCog(commands.Cog):
     
     @role_group.command(name='add', description='Add a button role')
     @app_commands.checks.has_permissions(administrator=True)
-    async def add(self, interaction: discord.Interaction, role: discord.Role):
+    async def add(self, interaction: discord.Interaction, role: discord.Role, emoji: str):
         try:
-            status, result = self.role_manager.add_role(interaction.guild, role)
+            status, result = self.role_manager.add_role(interaction.guild, role, emoji)
             await interaction.response.send_message(result, ephemeral=True)
         except Exception as e:
             traceback.print_exc()
