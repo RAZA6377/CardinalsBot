@@ -1,6 +1,7 @@
-from discord.ext import commands
-from pathlib import Path
 import traceback
+from pathlib import Path
+
+from discord.ext import commands
 
 
 class CogHandler:
@@ -27,7 +28,7 @@ class CogHandler:
         if cog_list == []:
             return [], []
         else:
-            await bot.load_extension('jishaku')
+            await bot.load_extension("jishaku")
             for cog in cog_list:
                 try:
                     await bot.load_extension(f"cogs.{cog}")

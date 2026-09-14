@@ -1,15 +1,13 @@
 import discord
 from discord.ext import commands
 from discord.ui import (
-    LayoutView,
-    Button,
     Container,
-    TextDisplay,
+    LayoutView,
+    MediaGallery,
     Section,
     Separator,
+    TextDisplay,
     Thumbnail,
-    ActionRow,
-    MediaGallery
 )
 
 
@@ -29,10 +27,9 @@ class WelcomeLayout(LayoutView):
         )
         user_section = Section(user_name, accessory=user_icon)
         welcome_banner = MediaGallery(
-                discord.MediaGalleryItem(
-                    "https://cdn.discordapp.com/attachments/1017630659885420554/1540413350893195274/file_000000003b6c8211a11ece1e3be103e2.png?ex=6a89dd3a&is=6a888bba&hm=c0da9f5283bab44851268e6c038da34cf35f3f0987a17140c7a7b2ae875de98b&"
-                )
-                    
+            discord.MediaGalleryItem(
+                "https://cdn.discordapp.com/attachments/1544726234167119913/1548749235376103605/file_000000003b6c8211a11ece1e3be103e2.png?ex=6aa830a0&is=6aa6df20&hm=108476d67846763329ffd2730eff6cba7c59955d4676036eeb01953cf04e4f46&"
+            )
         )
         container = Container(
             server_name,
@@ -48,8 +45,7 @@ class WelcomeLayout(LayoutView):
 class WelcomeCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        
-        
+
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
         try:
@@ -58,8 +54,6 @@ class WelcomeCog(commands.Cog):
             await channel.send(view=layout)
         except Exception as e:
             print(f"ERROR while welcoming {member.name}: {type(e).__name__}:  {e}")
-            pass
-            
 
     @commands.command(name="welcome_test", description="Test Welcome Message")
     async def welcome_test(self, ctx):
