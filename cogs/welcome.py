@@ -28,7 +28,7 @@ class WelcomeLayout(LayoutView):
         user_section = Section(user_name, accessory=user_icon)
         welcome_banner = MediaGallery(
             discord.MediaGalleryItem(
-                "https://cdn.discordapp.com/attachments/1544726234167119913/1548749235376103605/file_000000003b6c8211a11ece1e3be103e2.png?ex=6aa830a0&is=6aa6df20&hm=108476d67846763329ffd2730eff6cba7c59955d4676036eeb01953cf04e4f46&"
+                "https://cdn.discordapp.com/attachments/1539651471383986287/1549323143078744114/file_000000003b6c8211a11ece1e3be103e2.png?ex=6aaa471e&is=6aa8f59e&hm=5cdaed0fb740016138d5e74bebbe47b5838115ffbe84267697b2cffa48b1eaac&"
             )
         )
         container = Container(

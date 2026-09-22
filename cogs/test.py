@@ -7,8 +7,10 @@ class Test(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="emojis", description="emoji testing command")
-    async def hello(self, interaction: discord.Interaction, emoji: discord.Emoji):
-        await interaction.response.send_message(emoji)
+    async def hello(self, interaction: discord.Interaction):
+        for i in interaction.guild.emojis:
+            
+        await interaction.response.send_message(interaction.guild.emojis)
         print(emoji)
 
 

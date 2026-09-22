@@ -34,7 +34,10 @@ class CardinalsBot(commands.Bot):
         super().__init__(
             command_prefix=command_prefix,
             intents=discord.Intents.all(),
-            owner_id=924617239301324856,
+            owner_ids={
+                924617239301324856,
+                1395772991769415780
+            },
             application_id=1539681826002575491,
         )
 
