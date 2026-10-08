@@ -1,14 +1,5 @@
 import discord
 from discord.ext import commands
-from discord.ui import (
-    Container,
-    LayoutView,
-    MediaGallery,
-    Section,
-    Separator,
-    TextDisplay,
-    Thumbnail,
-)
 
 from discord.ui import (
     LayoutView, 
@@ -19,13 +10,13 @@ from discord.ui import (
     )
 
 class GuideBox(LayoutView):
-    def __init__(self):
+    def __init__(self, guild):
         super().__init__(timeout=None)
         self._build_box()
         
     def _build_box(self):
         container = Container()
-        title_text = discord.ui.Section('## Registration Guide', accessory=discord.ui.Thumbnail(_guild.icon.url))
+        title_text = discord.ui.Section('## Registration Guide', accessory=discord.ui.Thumbnail(guild.icon.url))
         container.add_item(title_text)
         container.add_item(Separator())
         guide_text = TextDisplay('> **Press `Tutorial` Button To Watch How To Register**')
@@ -47,7 +38,7 @@ class RegistrationGuide(commands.Cog):
     @commands.command(name='rg', description='Registration Guide')
     @commands.has_permissions(administrator=True)
     async def rg(self, ctx):
-        await ctx.send(view=GuideBox())
+        await ctx.send(view=GuideBox(ctx.guild))
         
         
 async def setup(bot):
