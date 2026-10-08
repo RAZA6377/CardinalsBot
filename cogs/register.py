@@ -12,6 +12,7 @@ from discord.ui import (
 class GuideBox(LayoutView):
     def __init__(self, guild):
         super().__init__(timeout=None)
+        self.guild = guild
         self._build_box()
         
     def _build_box(self):
