@@ -36,7 +36,7 @@ class RoleManager:
     def add_role(self, guild: discord.Guild, role: discord.Role, emoji: str):
         data = self.get_data()
         guild_roles = self.get_guild_roles(guild)
-        if role.id in guild_roles:
+        if str(role.id) in guild_roles:
             return 'error', 'Role already exists'
         data[str(guild.id)]['roles'][str(role.id)] = emoji
         self.save_data(data)
