@@ -16,7 +16,7 @@ class GuideBox(LayoutView):
         
     def _build_box(self):
         container = Container()
-        title_text = discord.ui.Section('## Registration Guide', accessory=discord.ui.Thumbnail(guild.icon.url))
+        title_text = discord.ui.Section('## Registration Guide', accessory=discord.ui.Thumbnail(self.guild.icon.url))
         container.add_item(title_text)
         container.add_item(Separator())
         guide_text = TextDisplay('> **Press `Tutorial` Button To Watch How To Register**')
